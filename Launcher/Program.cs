@@ -36,7 +36,8 @@ namespace Launcher {
                 Left = -100,
                 TransparencyKey = Color.Tan,
                 BackColor = Color.Tan,
-                StartPosition = FormStartPosition.Manual
+                StartPosition = FormStartPosition.Manual,
+                Text = Application.ProductName
             };
             SetIcon();
             _form.Closed += (sender, args) => {
