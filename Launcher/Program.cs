@@ -23,6 +23,7 @@ namespace Launcher {
                     mainArgs[0] = File.ReadAllText(Application.ProductName + ".txt");
                 } catch(Exception) {
                     // ignored
+                    mainArgs = new String[]{};
                 }
             }
             
