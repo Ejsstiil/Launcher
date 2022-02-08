@@ -20,7 +20,7 @@ namespace Launcher {
                 mainArgs = new [] {String.Empty};
 
                 try {
-                    mainArgs[0] = File.ReadAllText(Application.ProductName + ".txt");
+                    mainArgs[0] = File.ReadAllText(Path.GetFileNameWithoutExtension(Environment.GetCommandLineArgs()[0]) + ".txt");
                 } catch(Exception) {
                     // ignored
                     mainArgs = new String[]{};
@@ -37,7 +37,7 @@ namespace Launcher {
                 TransparencyKey = Color.Tan,
                 BackColor = Color.Tan,
                 StartPosition = FormStartPosition.Manual,
-                Text = Application.ProductName
+                Text = Path.GetFileNameWithoutExtension(Environment.GetCommandLineArgs()[0])
             };
             SetIcon();
             _form.Closed += (sender, args) => {
@@ -50,7 +50,7 @@ namespace Launcher {
         }
 
         private void SetIcon() {
-            var testIco = Application.ProductName + ".ico";
+            var testIco = Path.GetFileNameWithoutExtension(Environment.GetCommandLineArgs()[0]) + ".ico";
             if(!File.Exists(testIco)) return;
             using(var stream = File.OpenRead(testIco)) {
                 _form.Icon = new Icon(stream);
