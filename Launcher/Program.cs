@@ -18,18 +18,17 @@ namespace Launcher {
         private string _ico = Path.GetFileNameWithoutExtension(Environment.GetCommandLineArgs()[0]) + ".ico";
 
         private Program(string[] mainArgs) {
-
             if(mainArgs.Length == 0) {
-                mainArgs = new [] {String.Empty};
+                mainArgs = new[] { String.Empty };
 
                 try {
                     mainArgs[0] = File.ReadAllText(Path.GetFileNameWithoutExtension(Environment.GetCommandLineArgs()[0]) + ".txt");
                 } catch(Exception) {
                     // ignored
-                    mainArgs = new String[]{};
+                    mainArgs = new String[] { };
                 }
             }
-            
+
             _form = new Form {
                 Visible = true,
                 ShowInTaskbar = true,
@@ -42,7 +41,7 @@ namespace Launcher {
                 TransparencyKey = Color.Tan,
                 BackColor = Color.Tan,
                 StartPosition = FormStartPosition.Manual,
-                Text = Path.GetFileNameWithoutExtension(Environment.GetCommandLineArgs()[0])
+                Text = Path.GetFileNameWithoutExtension(Environment.GetCommandLineArgs()[0]),
             };
             SetIcon();
             SetBackgroundImage();
