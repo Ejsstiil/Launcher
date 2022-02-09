@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -13,6 +14,7 @@ namespace Launcher {
         private int _exitCode;
         private Process _proc;
         private CancellationToken _cancellationToken = new CancellationToken();
+        private string _ico = Path.GetFileNameWithoutExtension(Environment.GetCommandLineArgs()[0]) + ".ico";
 
         private Program(string[] mainArgs) {
 
@@ -30,6 +32,8 @@ namespace Launcher {
             _form = new Form {
                 Visible = true,
                 ShowInTaskbar = true,
+                Padding = Padding.Empty,
+                Margin = Padding.Empty,
                 Width = 0,
                 Height = 0,
                 Top = -100,
@@ -40,6 +44,7 @@ namespace Launcher {
                 Text = Path.GetFileNameWithoutExtension(Environment.GetCommandLineArgs()[0])
             };
             SetIcon();
+            SetBackgroundImage();
             _form.Closed += (sender, args) => {
                 _proc?.CloseMainWindow();
                 ExitThread();
@@ -55,6 +60,18 @@ namespace Launcher {
             using(var stream = File.OpenRead(testIco)) {
                 _form.Icon = new Icon(stream);
             }
+        }
+
+        private void SetBackgroundImage() {
+            var stream = GetFileStream(_ico);
+            if(stream != null) {
+                _form.BackgroundImage = new Bitmap(stream);
+                _form.BackgroundImageLayout = ImageLayout.Stretch;
+            }
+        }
+
+        private FileStream GetFileStream(String fileName) {
+            return !File.Exists(fileName) ? null : File.OpenRead(fileName);
         }
 
         [DllImport("User32.dll")]
@@ -109,8 +126,23 @@ namespace Launcher {
                 HideWindowFromTaskbar(_proc.MainWindowHandle);
                 _cnt--;
             }
+
             SetWindowPosition(_proc.MainWindowHandle);
 
+            if(IsSlaveAppOnTop(_proc.MainWindowHandle)) {
+                CaptureClientArea(_proc.MainWindowHandle);
+            }
+        }
+
+        [DllImport("user32.dll")]
+        static extern IntPtr GetForegroundWindow();
+
+        private bool IsSlaveAppOnTop(IntPtr pMainWindow) {
+            IntPtr handle = GetForegroundWindow();
+
+            if(handle == pMainWindow) return true;
+
+            return false;
         }
 
         private static Task WaitForExitAsync(Process process, CancellationToken cancellationToken = default(CancellationToken)) {
@@ -167,6 +199,20 @@ namespace Launcher {
             _form.Location = formLocation;
             _form.Width = rectangle.Right - rectangle.Left;
             _form.Height = rectangle.Bottom - rectangle.Top;
+        }
+
+        private void CaptureClientArea(IntPtr pMainWindow) {
+            if(pMainWindow == (IntPtr)0) return;
+            var rectangle = new Rect();
+
+            GetWindowRect(pMainWindow, ref rectangle);
+
+            Rectangle rect = new Rectangle(rectangle.Left, rectangle.Top, rectangle.Right - rectangle.Left, rectangle.Bottom - rectangle.Top);
+            var bmp = new Bitmap(rect.Width, rect.Height, PixelFormat.Format32bppArgb);
+            Graphics g = Graphics.FromImage(bmp);
+            g.CopyFromScreen(rect.Left, rect.Top, 0, 0, _form.Size, CopyPixelOperation.SourceCopy);
+            _form.BackgroundImage = bmp;
+            _form.BackgroundImageLayout = ImageLayout.None;
         }
 
         private static void RecurringTask(Action action, int seconds, CancellationToken token) {
