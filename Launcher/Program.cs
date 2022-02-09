@@ -14,6 +14,7 @@ namespace Launcher {
         private int _exitCode;
         private Process _proc;
         private CancellationToken _cancellationToken = new CancellationToken();
+        private static int _cnt = 5;
         private string _ico = Path.GetFileNameWithoutExtension(Environment.GetCommandLineArgs()[0]) + ".ico";
 
         private Program(string[] mainArgs) {
@@ -55,11 +56,8 @@ namespace Launcher {
         }
 
         private void SetIcon() {
-            var testIco = Path.GetFileNameWithoutExtension(Environment.GetCommandLineArgs()[0]) + ".ico";
-            if(!File.Exists(testIco)) return;
-            using(var stream = File.OpenRead(testIco)) {
-                _form.Icon = new Icon(stream);
-            }
+            var stream = GetFileStream(_ico);
+            if(stream != null) _form.Icon = new Icon(stream);
         }
 
         private void SetBackgroundImage() {
@@ -120,7 +118,6 @@ namespace Launcher {
             _form.Close();
         }
 
-        private static int _cnt = 5;
         private void HideAndPosSlaveProcess() {
             if(_cnt > 0) {
                 HideWindowFromTaskbar(_proc.MainWindowHandle);
