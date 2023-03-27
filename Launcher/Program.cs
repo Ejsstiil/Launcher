@@ -86,7 +86,7 @@ namespace Launcher {
 
             if(eventArgs.Length > 0) {
                 start.FileName = eventArgs[0];
-                start.Arguments = eventArgs[1];
+                if(eventArgs.Length > 1) start.Arguments = eventArgs[1];
             } else
                 start.FileName = "calc";
 
