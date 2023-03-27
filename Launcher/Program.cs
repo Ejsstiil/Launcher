@@ -13,42 +13,44 @@ namespace Launcher {
         private readonly Form _form;
         private int _exitCode;
         private Process _proc;
-        private CancellationToken _cancellationToken = new CancellationToken();
+        private readonly CancellationToken _cancellationToken = new CancellationToken();
         private static int _cnt = 5;
-        private string _ico = Path.GetFileNameWithoutExtension(Environment.GetCommandLineArgs()[0]) + ".ico";
+        private readonly string _ico = Path.GetFileNameWithoutExtension(Environment.GetCommandLineArgs()[0]) + ".ico";
 
         private Program(string[] mainArgs) {
             if(mainArgs.Length == 0) {
-                mainArgs = new[] { String.Empty };
+                mainArgs = new[] { string.Empty };
 
                 try {
-                    mainArgs[0] = File.ReadAllText(Path.GetFileNameWithoutExtension(Environment.GetCommandLineArgs()[0]) + ".txt");
+                    mainArgs = File.ReadAllText(Path.GetFileNameWithoutExtension(Environment.GetCommandLineArgs()[0]) + ".txt").Split(Convert.ToChar("\t"));
                 } catch(Exception) {
+                    var file = File.Create(Path.GetFileNameWithoutExtension(Environment.GetCommandLineArgs()[0]) + ".txt");
                     // ignored
-                    mainArgs = new String[] { };
+                    mainArgs = new string[] { };
                 }
             }
+            if( mainArgs[0].Length == 0) mainArgs = new string[] { };
 
             _form = new Form {
-                Visible = true,
-                ShowInTaskbar = true,
-                Padding = Padding.Empty,
-                Margin = Padding.Empty,
-                Width = 0,
-                Height = 0,
-                Top = -100,
-                Left = -100,
-                TransparencyKey = Color.Tan,
-                BackColor = Color.Tan,
-                StartPosition = FormStartPosition.Manual,
-                Text = Path.GetFileNameWithoutExtension(Environment.GetCommandLineArgs()[0]),
+                    Visible = true,
+                    ShowInTaskbar = true,
+                    Padding = Padding.Empty,
+                    Margin = Padding.Empty,
+                    Width = 0,
+                    Height = 0,
+                    Top = -100,
+                    Left = -100,
+                    TransparencyKey = Color.Tan,
+                    BackColor = Color.Tan,
+                    StartPosition = FormStartPosition.Manual,
+                    Text = Path.GetFileNameWithoutExtension(Environment.GetCommandLineArgs()[0]),
             };
             SetIcon();
             SetBackgroundImage();
             _form.Closed += (sender, args) => {
-                _proc?.CloseMainWindow();
-                ExitThread();
-            };
+                                _proc?.CloseMainWindow();
+                                ExitThread();
+                            };
             _form.Activated += (sender, args) => { ActicateSubProcess(_proc); };
             _form.Shown += async (sender, args) => { await ThreadNewMethod(mainArgs); };
             _form.Show();
@@ -61,13 +63,12 @@ namespace Launcher {
 
         private void SetBackgroundImage() {
             var stream = GetFileStream(_ico);
-            if(stream != null) {
-                _form.BackgroundImage = new Bitmap(stream);
-                _form.BackgroundImageLayout = ImageLayout.Stretch;
-            }
+            if(stream == null) return;
+            _form.BackgroundImage = new Bitmap(stream);
+            _form.BackgroundImageLayout = ImageLayout.Stretch;
         }
 
-        private FileStream GetFileStream(String fileName) {
+        private static FileStream GetFileStream(string fileName) {
             return !File.Exists(fileName) ? null : File.OpenRead(fileName);
         }
 
@@ -83,13 +84,14 @@ namespace Launcher {
             var start = new ProcessStartInfo();
 
 
-            if(eventArgs.Length > 0)
+            if(eventArgs.Length > 0) {
                 start.FileName = eventArgs[0];
-            else
+                start.Arguments = eventArgs[1];
+            } else
                 start.FileName = "calc";
 
-            String rest = "";
-            if(eventArgs.Length > 1) rest = String.Join(" ", eventArgs, 1, eventArgs.Length - 1);
+            var rest = "";
+            if(eventArgs.Length > 1) rest = string.Join(" ", eventArgs, 1, eventArgs.Length - 1);
             start.Arguments = rest;
 
 
@@ -133,12 +135,10 @@ namespace Launcher {
         [DllImport("user32.dll")]
         static extern IntPtr GetForegroundWindow();
 
-        private bool IsSlaveAppOnTop(IntPtr pMainWindow) {
-            IntPtr handle = GetForegroundWindow();
+        private static bool IsSlaveAppOnTop(IntPtr pMainWindow) {
+            var handle = GetForegroundWindow();
 
-            if(handle == pMainWindow) return true;
-
-            return false;
+            return handle == pMainWindow;
         }
 
         private static Task WaitForExitAsync(Process process, CancellationToken cancellationToken = default(CancellationToken)) {
@@ -203,9 +203,9 @@ namespace Launcher {
 
             GetWindowRect(pMainWindow, ref rectangle);
 
-            Rectangle rect = new Rectangle(rectangle.Left, rectangle.Top, rectangle.Right - rectangle.Left, rectangle.Bottom - rectangle.Top);
+            var rect = new Rectangle(rectangle.Left, rectangle.Top, rectangle.Right - rectangle.Left, rectangle.Bottom - rectangle.Top);
             var bmp = new Bitmap(rect.Width, rect.Height, PixelFormat.Format32bppArgb);
-            Graphics g = Graphics.FromImage(bmp);
+            var g = Graphics.FromImage(bmp);
             g.CopyFromScreen(rect.Left, rect.Top, 0, 0, _form.Size, CopyPixelOperation.SourceCopy);
             _form.BackgroundImage = bmp;
             _form.BackgroundImageLayout = ImageLayout.None;
@@ -217,18 +217,18 @@ namespace Launcher {
             }
 
             Task.Run(async () => {
-                while(!token.IsCancellationRequested) {
-                    action();
-                    await Task.Delay(TimeSpan.FromSeconds(seconds), token);
-                }
-            }, token);
+                         while(!token.IsCancellationRequested) {
+                             action();
+                             await Task.Delay(TimeSpan.FromSeconds(seconds), token);
+                         }
+                     }, token);
         }
 
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main(string[] args) {
+        private static void Main(string[] args) {
             var context = new Program(args);
             Application.Run(context);
         }
